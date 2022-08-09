@@ -1,5 +1,6 @@
 const { createToken } = require('../middlewares/tokenGen');
 const {myProfile} = require('../models/userProfile.models');
+const {FriendList} = require('../models/userFriendList');
 const jwt = require('jsonwebtoken');
 
 exports.signUp = async(req,res)=>{
@@ -31,7 +32,6 @@ exports.login = async (req,res)=>{
    }
 }
 
-
 exports.profile = (req,res)=>{
     const token = req.body.tk;
     if(token!==undefined){
@@ -46,3 +46,67 @@ exports.profile = (req,res)=>{
          }) 
     }
 }
+
+
+exports.findFriends = async(req,res)=>{
+    // const friends =  await myProfile.find({_id:{$ne:'62ed69f1c5f75f4fd4bff05f'}}).select({FullName:1});
+    // res.status(200).send(friends);
+    const token = req.body.tk;
+    if(token!==undefined){
+        jwt.verify(token,'this is a secret key',async(err,decodedToken)=>{
+            try{
+                 const friends = await myProfile.find({_id: {$ne:decodedToken.id}}).select({FullName:1});
+                 res.status(200).send(friends);
+            }
+            catch(err){
+             console.log(err)
+            }
+         }) 
+    }
+}
+
+exports.friendList = async(req,res)=>{
+   try{
+        const _id = req.body.id;
+        const friendsProfile = await myProfile.find({_id}).select({FullName:1});
+        const FriendListDoc = FriendList({
+            Friends:[
+                {
+                FriendsId:friendsProfile[0].id,
+                FriendsName:friendsProfile[0].FullName
+                }
+            ]
+        });
+        const result = await FriendListDoc.save();
+        res.status(200).send(result);
+        console.log(result);
+   }
+   catch(err){
+    console.log(err)
+   }
+}
+
+///fake doc
+const check = async()=>{
+    try{
+        const FriendListDoc = FriendList({_id:'62f1636df74a1edcb132e652'},
+       
+                {$set:{
+                FriendsId:'1234',
+                FriendsName:'don2'
+                }}
+    
+        );
+        // const result = await FriendListDoc.save();
+        console.log(FriendListDoc)
+    }
+    catch(err){
+        console.log(err)
+    }
+}
+// check();
+const findIDS = async()=>{
+    const findby = await FriendList.find({_id:'62f1636df74a1edcb132e652'});
+    console.log(findby);
+}
+// findIDS();
